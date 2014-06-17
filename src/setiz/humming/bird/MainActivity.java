@@ -1,6 +1,5 @@
 package setiz.humming.bird;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import android.app.Activity;
@@ -8,20 +7,18 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
 import android.nfc.NdefMessage;
-import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.Ndef;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.FindCallback;
-import com.parse.GetDataCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
@@ -34,9 +31,11 @@ public class MainActivity extends Activity {
 	private ProgressDialog dlg;
 	private TextView mTextView;
 	private NfcAdapter mNfcAdapter;
-	private String tagRead = "";
 	private String sound;
 	private ParseFile music;
+	private String musicUrl;
+	private MediaPlayer mediaPlayer;
+	private int playbackPosition = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +51,7 @@ public class MainActivity extends Activity {
 		}
 
 		// handleIntent(getIntent());
-
 		resolveIntent(getIntent());
-
 	}
 
 	@Override
@@ -97,14 +94,18 @@ public class MainActivity extends Activity {
 				// Exemple basique de récupération des données dans le tableau
 				String str = new String(
 						messages[0].getRecords()[0].getPayload());
-				String sound = parseText(str);
+				parseText(str);
+				try {
+					Log.i("music", musicUrl);
+				} catch (NullPointerException e) {
 
-				mTextView.setText(sound);
+				}
+				// mTextView.setText(sound);
 			}
 		}
 	}
 
-	private String parseText(String str) {
+	private void parseText(String str) {
 		Log.i("uri", str);
 		int pos = str.lastIndexOf('/') + 1;
 		String res = str.substring(pos);
@@ -128,8 +129,9 @@ public class MainActivity extends Activity {
 					for (ParseObject score : scoreList) {
 						sound = score.getString("name");
 						Log.i("score", "" + score.getString("name"));
-						music = (ParseFile) score.get("music");
-						Log.i("music", ""+music);
+						music = score.getParseFile("sound");
+						musicUrl = music.getUrl();
+						Log.i("music", musicUrl);
 						mTextView.setText(sound);
 					}
 				} else {
@@ -138,16 +140,13 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		/*music.getDataInBackground(new GetDataCallback() {
-			public void done(byte[] data, ParseException e) {
-				if (e == null) {
-					Log.i("tag", "" + data);
-				} else {
-					Log.d("music", "Error: " + e.getMessage());
-				}
-			}
-		});*/
-		return sound;
+		/*
+		 * music.getDataInBackground(new GetDataCallback() { public void
+		 * done(byte[] data, ParseException e) { if (e == null) { Log.i("tag",
+		 * "" + data); } else { Log.d("music", "Error: " + e.getMessage()); } }
+		 * });
+		 */
+		// return musicUrl;
 	}
 
 	@Override
@@ -164,140 +163,87 @@ public class MainActivity extends Activity {
 		resolveIntent(intent);
 	}
 
-	/*
-	 * private void handleIntent(Intent intent) { String action =
-	 * intent.getAction(); if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action))
-	 * { Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG); new
-	 * NdefReaderTask().execute(tag); } else if
-	 * (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
-	 * 
-	 * // In case we would still use the Tech Discovered Intent Tag tag =
-	 * intent.getParcelableExtra(NfcAdapter.EXTRA_TAG); String[] techList =
-	 * tag.getTechList(); String searchedTech = Ndef.class.getName(); for
-	 * (String tech : techList) { if (searchedTech.equals(tech)) { new
-	 * NdefReaderTask().execute(tag); break; } } } }
-	 */
-
-	/**
-	 * Background task for reading the data. Do not block the UI thread while
-	 * reading.
-	 * 
-	 * @author Ralf Wondratschek
-	 * 
-	 */
-	private class NdefReaderTask extends AsyncTask<Tag, Void, String> {
-
-		@Override
-		protected String doInBackground(Tag... params) {
-			Tag tag = params[0];
-			Ndef ndef = Ndef.get(tag);
-			if (ndef == null) {
-				// NDEF is not supported by this Tag.
-				return null;
+	public void doClick(View view) {
+		// if (musicUrl != null) {
+		LinearLayout playerButtons = (LinearLayout) findViewById(R.id.playerButtons);
+		playerButtons.setVisibility(View.VISIBLE);
+		switch (view.getId()) {
+		case R.id.startPlayerBtn:
+			try {
+				playAudio("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3"
+);
+				// playLocalAudio();
+				// playLocalAudio_UsingDescriptor();
+				Log.i("clic", "clic");
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-
-			NdefMessage ndefMessage = ndef.getCachedNdefMessage();
-
-			NdefRecord[] records = ndefMessage.getRecords();
-			for (NdefRecord ndefRecord : records) {
-				if (ndefRecord.getTnf() == NdefRecord.TNF_WELL_KNOWN
-				/*
-				 * && Arrays.equals(ndefRecord.getType(), NdefRecord.RTD_TEXT)
-				 */) {
-					try {
-						return readText(ndefRecord);
-					} catch (UnsupportedEncodingException e) {
-						Log.e(TAG, "Unsupported Encoding", e);
-					}
-				}
+			break;
+		case R.id.pausePlayerBtn:
+			if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+				playbackPosition = mediaPlayer.getCurrentPosition();
+				mediaPlayer.pause();
 			}
-
-			return null;
-		}
-
-		private String readText(NdefRecord record)
-				throws UnsupportedEncodingException {
-			/*
-			 * See NFC forum specification for "Text Record Type Definition" at
-			 * 3.2.1
-			 * 
-			 * http://www.nfc-forum.org/specs/
-			 * 
-			 * bit_7 defines encoding bit_6 reserved for future use, must be 0
-			 * bit_5..0 length of IANA language code
-			 */
-
-			byte[] payload = record.getPayload();
-
-			// Get the Text Encoding
-			String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8"
-					: "UTF-16";
-
-			// Get the Language Code
-			int languageCodeLength = payload[0] & 0063;
-
-			// String languageCode = new String(payload, 1, languageCodeLength,
-			// "US-ASCII");
-			// e.g. "en"
-
-			// Get the Text
-			String result = new String(payload, languageCodeLength + 1,
-					payload.length - languageCodeLength - 1, textEncoding);
-			return result;
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-			if (result != null) {
-				tagRead = result;
-				Log.i("tag", tagRead);
-				mTextView.setText("Read content: " + result);
+			break;
+		case R.id.restartPlayerBtn:
+			if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+				mediaPlayer.seekTo(playbackPosition);
+				mediaPlayer.start();
 			}
+			break;
+		case R.id.stopPlayerBtn:
+			if (mediaPlayer != null) {
+				mediaPlayer.stop();
+				playbackPosition = 0;
+			}
+			break;
 		}
-	}
-
-	/**
-	 * @param activity
-	 *            The corresponding {@link Activity} requesting the foreground
-	 *            dispatch.
-	 * @param adapter
-	 *            The {@link NfcAdapter} used for the foreground dispatch.
-	 */
-	public static void setupForegroundDispatch(final Activity activity,
-			NfcAdapter adapter) {
-		final Intent intent = new Intent(activity.getApplicationContext(),
-				activity.getClass());
-		intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-		final PendingIntent pendingIntent = PendingIntent.getActivity(
-				activity.getApplicationContext(), 0, intent, 0);
-
-		IntentFilter[] filters = new IntentFilter[1];
-		String[][] techList = new String[][] {};
-
-		// Notice that this is the same filter as in our manifest.
-		filters[0] = new IntentFilter();
-		filters[0].addAction(NfcAdapter.ACTION_NDEF_DISCOVERED);
-		filters[0].addCategory(Intent.CATEGORY_DEFAULT);
-		// try {
-		// filters[0].addDataType(MIME_TEXT_PLAIN);
-		// } catch (MalformedMimeTypeException e) {
-		// throw new RuntimeException("Check your mime type.");
 		// }
-
-		adapter.enableForegroundDispatch(activity, pendingIntent, filters,
-				techList);
 	}
 
-	/**
-	 * @param activity
-	 *            The corresponding {@link BaseActivity} requesting to stop the
-	 *            foreground dispatch.
-	 * @param adapter
-	 *            The {@link NfcAdapter} used for the foreground dispatch.
+	private void playAudio(String url) throws Exception {
+		killMediaPlayer();
+
+		mediaPlayer = new MediaPlayer();
+		mediaPlayer.setDataSource(url);
+		mediaPlayer.prepare();
+		mediaPlayer.start();
+	}
+
+	/*
+	 * private void playLocalAudio() throws Exception { mediaPlayer =
+	 * MediaPlayer.create(this, R.raw.music_file); mediaPlayer.start(); }
 	 */
-	public static void stopForegroundDispatch(final Activity activity,
-			NfcAdapter adapter) {
-		adapter.disableForegroundDispatch(activity);
+
+	/*
+	 * private void playLocalAudio_UsingDescriptor() throws Exception {
+	 * 
+	 * AssetFileDescriptor fileDesc = getResources().openRawResourceFd(
+	 * R.raw.music_file); if (fileDesc != null) {
+	 * 
+	 * mediaPlayer = new MediaPlayer();
+	 * mediaPlayer.setDataSource(fileDesc.getFileDescriptor(),
+	 * fileDesc.getStartOffset(), fileDesc.getLength());
+	 * 
+	 * fileDesc.close();
+	 * 
+	 * mediaPlayer.prepare(); mediaPlayer.start(); } }
+	 */
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		killMediaPlayer();
 	}
+
+	private void killMediaPlayer() {
+		if (mediaPlayer != null) {
+			try {
+				mediaPlayer.release();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }
