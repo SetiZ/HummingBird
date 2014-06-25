@@ -151,9 +151,9 @@ public class MainActivity extends Activity {
 		switch (res) {
 		case 1:
 			Log.i("1", ""+res);
-			mTextView.setText("one");
+			mTextView.setText("Pharrell Williams - Happy");
 			try {
-				mediaPlayer.setDataSource("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3");
+				mediaPlayer.setDataSource("http://hb.setiz.net/Pharrell.mp3");
 				mediaPlayer.prepare();
 			} catch (IllegalArgumentException | SecurityException
 					| IllegalStateException | IOException e) {
@@ -163,15 +163,15 @@ public class MainActivity extends Activity {
 			break;
 		case 2:
 			Log.i("2", ""+res);
+			mTextView.setText("Pink Floyd - Money");
 			try {
-				mediaPlayer.setDataSource("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-da668821-fca5-4064-8cc0-e3a92e04948c-06.Airbourne%20-%20Live%20It%20Up.mp3");
+				mediaPlayer.setDataSource("http://hb.setiz.net/PinkFloyd.mp3");
 				mediaPlayer.prepare();
 			} catch (IllegalArgumentException | SecurityException
 					| IllegalStateException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			mTextView.setText("two");
 			break;
 		default:
 			Log.i("i", ""+res);
