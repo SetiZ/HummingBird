@@ -1,5 +1,6 @@
 package setiz.humming.bird;
 
+import java.io.IOException;
 import java.util.List;
 
 import android.app.Activity;
@@ -7,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
@@ -14,7 +16,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,8 +53,50 @@ public class MainActivity extends Activity {
 			return;
 		}
 
+		mediaPlayer = new MediaPlayer();
+		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		/*
+		 * try { mediaPlayer .setDataSource(
+		 * "http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3"
+		 * ); mediaPlayer.prepare(); } catch (IllegalArgumentException |
+		 * SecurityException | IllegalStateException | IOException e1) {
+		 * e1.printStackTrace(); }
+		 */
+
+		Button play = (Button) findViewById(R.id.startPlayerBtn);
+		play.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				try {
+					mediaPlayer.seekTo(playbackPosition);
+					mediaPlayer.start();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		Button pause = (Button) findViewById(R.id.pausePlayerBtn);
+		pause.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+					playbackPosition = mediaPlayer.getCurrentPosition();
+					mediaPlayer.pause();
+				}
+			}
+		});
 		// handleIntent(getIntent());
 		resolveIntent(getIntent());
+		/*try {
+			mediaPlayer.setDataSource(musicUrl);
+			mediaPlayer.prepare();
+		} catch (IllegalArgumentException | SecurityException
+				| IllegalStateException | NullPointerException | IOException e1) {
+			e1.printStackTrace();
+		}*/
+		Log.i("url", "url: " + musicUrl);
 	}
 
 	@Override
@@ -65,8 +110,6 @@ public class MainActivity extends Activity {
 		String[][] techListArray = null;
 		mNfcAdapter.enableForegroundDispatch(this, pIntent, filters,
 				techListArray);
-
-		// setupForegroundDispatch(this, mNfcAdapter);
 	}
 
 	@Override
@@ -75,10 +118,9 @@ public class MainActivity extends Activity {
 		 * Call this before onPause, otherwise an IllegalArgumentException is
 		 * thrown as well.
 		 */
-		// stopForegroundDispatch(this, mNfcAdapter);
-
 		super.onPause();
 		mNfcAdapter.disableForegroundDispatch(this);
+		killMediaPlayer();
 	}
 
 	private void resolveIntent(Intent intent) {
@@ -96,9 +138,10 @@ public class MainActivity extends Activity {
 						messages[0].getRecords()[0].getPayload());
 				parseText(str);
 				try {
-					Log.i("music", musicUrl);
-				} catch (NullPointerException e) {
-
+					mediaPlayer.prepare();
+				} catch (IllegalStateException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 				// mTextView.setText(sound);
 			}
@@ -133,6 +176,12 @@ public class MainActivity extends Activity {
 						musicUrl = music.getUrl();
 						Log.i("music", musicUrl);
 						mTextView.setText(sound);
+						try {
+							mediaPlayer.setDataSource(musicUrl);
+						} catch (IllegalArgumentException | SecurityException
+								| IllegalStateException | IOException e1) {
+							e1.printStackTrace();
+						}
 					}
 				} else {
 					Log.d("score", "Error: " + e.getMessage());
@@ -162,73 +211,6 @@ public class MainActivity extends Activity {
 		 */
 		resolveIntent(intent);
 	}
-
-	public void doClick(View view) {
-		// if (musicUrl != null) {
-		LinearLayout playerButtons = (LinearLayout) findViewById(R.id.playerButtons);
-		playerButtons.setVisibility(View.VISIBLE);
-		switch (view.getId()) {
-		case R.id.startPlayerBtn:
-			try {
-				playAudio("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3"
-);
-				// playLocalAudio();
-				// playLocalAudio_UsingDescriptor();
-				Log.i("clic", "clic");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			break;
-		case R.id.pausePlayerBtn:
-			if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-				playbackPosition = mediaPlayer.getCurrentPosition();
-				mediaPlayer.pause();
-			}
-			break;
-		case R.id.restartPlayerBtn:
-			if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-				mediaPlayer.seekTo(playbackPosition);
-				mediaPlayer.start();
-			}
-			break;
-		case R.id.stopPlayerBtn:
-			if (mediaPlayer != null) {
-				mediaPlayer.stop();
-				playbackPosition = 0;
-			}
-			break;
-		}
-		// }
-	}
-
-	private void playAudio(String url) throws Exception {
-		killMediaPlayer();
-
-		mediaPlayer = new MediaPlayer();
-		mediaPlayer.setDataSource(url);
-		mediaPlayer.prepare();
-		mediaPlayer.start();
-	}
-
-	/*
-	 * private void playLocalAudio() throws Exception { mediaPlayer =
-	 * MediaPlayer.create(this, R.raw.music_file); mediaPlayer.start(); }
-	 */
-
-	/*
-	 * private void playLocalAudio_UsingDescriptor() throws Exception {
-	 * 
-	 * AssetFileDescriptor fileDesc = getResources().openRawResourceFd(
-	 * R.raw.music_file); if (fileDesc != null) {
-	 * 
-	 * mediaPlayer = new MediaPlayer();
-	 * mediaPlayer.setDataSource(fileDesc.getFileDescriptor(),
-	 * fileDesc.getStartOffset(), fileDesc.getLength());
-	 * 
-	 * fileDesc.close();
-	 * 
-	 * mediaPlayer.prepare(); mediaPlayer.start(); } }
-	 */
 
 	@Override
 	protected void onDestroy() {
