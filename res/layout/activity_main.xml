@@ -22,7 +22,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Play" />
+            android:text="@string/play" />
 
         <Button
             android:id="@+id/pausePlayerBtn"
@@ -30,7 +30,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Pause" />
+            android:text="@string/pause" />
     </LinearLayout>
 
 </LinearLayout>
