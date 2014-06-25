@@ -53,8 +53,8 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		mediaPlayer = new MediaPlayer();
-		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		/*
 		 * try { mediaPlayer .setDataSource(
 		 * "http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3"
@@ -125,6 +125,8 @@ public class MainActivity extends Activity {
 
 	private void resolveIntent(Intent intent) {
 		String action = intent.getAction();
+		mediaPlayer = new MediaPlayer();
+		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
 			Parcelable[] rawMsgs = intent
 					.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
@@ -133,21 +135,51 @@ public class MainActivity extends Activity {
 				for (int i = 0; i < rawMsgs.length; i++) {
 					messages[i] = (NdefMessage) rawMsgs[i];
 				}
-				// Exemple basique de récupération des données dans le tableau
+				// Exemple basique de rï¿½cupï¿½ration des donnï¿½es dans le tableau
 				String str = new String(
 						messages[0].getRecords()[0].getPayload());
-				parseText(str);
-				try {
-					mediaPlayer.prepare();
-				} catch (IllegalStateException | IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				int pos = str.lastIndexOf('/') + 1;
+				String res = str.substring(pos);
+				parseOffline(Integer.valueOf(res));
+				//parseText(str);
 				// mTextView.setText(sound);
 			}
 		}
 	}
+	
+	private void parseOffline(int res) {
+		switch (res) {
+		case 1:
+			Log.i("1", ""+res);
+			mTextView.setText("one");
+			try {
+				mediaPlayer.setDataSource("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-03a755c2-3bd0-4428-8456-26383b27f7dd-05.Daft%20Punk%20feat.%20Julian%20Casablancas%20-%20Instant%20Crush.mp3");
+				mediaPlayer.prepare();
+			} catch (IllegalArgumentException | SecurityException
+					| IllegalStateException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case 2:
+			Log.i("2", ""+res);
+			try {
+				mediaPlayer.setDataSource("http://files.parsetfss.com/d5529496-a020-49f0-b9e7-69851d5e7d50/tfss-da668821-fca5-4064-8cc0-e3a92e04948c-06.Airbourne%20-%20Live%20It%20Up.mp3");
+				mediaPlayer.prepare();
+			} catch (IllegalArgumentException | SecurityException
+					| IllegalStateException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			mTextView.setText("two");
+			break;
+		default:
+			Log.i("i", ""+res);
+			mTextView.setText("pouet");
+		}
+	}
 
+	@SuppressWarnings("unused")
 	private void parseText(String str) {
 		Log.i("uri", str);
 		int pos = str.lastIndexOf('/') + 1;
@@ -197,6 +229,23 @@ public class MainActivity extends Activity {
 		 */
 		// return musicUrl;
 	}
+	
+	 public static void setupForegroundDispatch(final Activity activity, NfcAdapter adapter) {
+	        final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
+	        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	 
+	        final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+	 
+	        IntentFilter[] filters = new IntentFilter[1];
+	        String[][] techList = new String[][]{};
+	 
+	        // Notice that this is the same filter as in our manifest.
+	        filters[0] = new IntentFilter();
+	        filters[0].addAction(NfcAdapter.ACTION_NDEF_DISCOVERED);
+	        filters[0].addCategory(Intent.CATEGORY_DEFAULT);
+	         
+	        adapter.enableForegroundDispatch(activity, pendingIntent, filters, techList);
+	    }
 
 	@Override
 	protected void onNewIntent(Intent intent) {
