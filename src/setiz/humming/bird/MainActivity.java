@@ -160,6 +160,7 @@ public class MainActivity extends Activity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			mediaPlayer.start();
 			break;
 		case 2:
 			Log.i("2", ""+res);
@@ -172,6 +173,7 @@ public class MainActivity extends Activity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			mediaPlayer.start();
 			break;
 		default:
 			Log.i("i", ""+res);
